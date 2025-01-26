@@ -1,13 +1,157 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #f9f9f9;
+  height: 100vh; /* Full height */
+  overflow: hidden; /* Prevent scrollbars on body */
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.antenna-manager {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100vh;
+  gap: 20px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.antennas {
+  display: flex;
+  flex-direction: column; /* Column layout for antennas section */
+  flex: 1;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.add-antenna {
+  display: flex;
+  flex-direction: row; /* Row layout for add/remove buttons */
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.add-antenna label {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+}
+
+.add-antenna input,
+.add-antenna textarea {
+  padding: 5px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.add-antenna button {
+  margin-left: 10px;
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-antenna button:hover {
+  background-color: #45a049;
+}
+
+.antenna {
+  display: flex;
+  flex-direction: column; /* Column layout for each antenna */
+  padding: 10px;
+  background-color: #f1f1f1;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.antenna:hover {
+  background-color: #e0e0e0;
+}
+
+.antenna .info {
+  display: flex;
+  flex-direction: column; /* Column layout for antenna info */
+  gap: 5px;
+  flex-grow: 1;
+}
+
+.health-bar {
+  width: 100%;
+  height: 10px;
+  background-color: #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.health-bar-fill {
+  height: 100%;
+  background-color: green;
+}
+
+.remove button {
+  padding: 6px 12px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.remove button:hover {
+  background-color: #cc0000;
+}
+
+.content {
+  flex: 1;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.antenna-details h2 {
+  margin-top: 0;
+}
+
+.antenna-details button {
+  margin: 5px 0;
+  padding: 8px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.antenna-details button:hover {
+  background-color: #0056b3;
+}
+
+.antenna-details input[type="range"] {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.antenna-details p {
+  margin: 5px 0;
 }
