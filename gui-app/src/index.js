@@ -188,7 +188,7 @@ const AntennaManager = () => {
             </div>
             <div>
               <label>
-                <strong>Location:</strong>
+                <strong>Angle:</strong>
                 <input
                   type="range"
                   min="0"
