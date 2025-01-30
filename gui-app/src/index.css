@@ -1,157 +1,83 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #f9f9f9;
-  height: 100vh; /* Full height */
-  overflow: hidden; /* Prevent scrollbars on body */
-}
-
-.antenna-manager {
+/* General Layout */
+.container {
   display: flex;
-  flex-direction: row;
-  width: 100%;
-  height: 100vh;
-  gap: 20px;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.antennas {
-  display: flex;
-  flex-direction: column; /* Column layout for antennas section */
-  flex: 1;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.add-antenna {
-  display: flex;
-  flex-direction: row; /* Row layout for add/remove buttons */
   justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
+  padding: 20px;
+  position: relative;
 }
 
-.add-antenna label {
+/* Draggable Blocks Section */
+.draggable-container {
+  width: 60%;
+  position: relative; /* Important for absolute positioning of lines */
+}
+
+.button-container {
   display: flex;
-  flex-direction: column;
-  margin-right: 10px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-.add-antenna input,
-.add-antenna textarea {
-  padding: 5px;
-  margin-top: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.add-antenna button {
-  margin-left: 10px;
-  padding: 8px 16px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.add-antenna button:hover {
-  background-color: #45a049;
-}
-
-.antenna {
-  display: flex;
-  flex-direction: column; /* Column layout for each antenna */
-  padding: 10px;
-  background-color: #f1f1f1;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.antenna:hover {
-  background-color: #e0e0e0;
-}
-
-.antenna .info {
-  display: flex;
-  flex-direction: column; /* Column layout for antenna info */
-  gap: 5px;
-  flex-grow: 1;
-}
-
-.health-bar {
-  width: 100%;
-  height: 10px;
+.button {
+  padding: 10px 20px;
   background-color: #ccc;
   border-radius: 5px;
-  overflow: hidden;
-  margin-top: 5px;
-}
-
-.health-bar-fill {
-  height: 100%;
-  background-color: green;
-}
-
-.remove button {
-  padding: 6px 12px;
-  background-color: #ff4d4d;
-  color: white;
-  border: none;
-  border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
-.remove button:hover {
-  background-color: #cc0000;
+.button:hover {
+  background-color: #aaa;
 }
 
-.content {
-  flex: 1;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* Adjusted Block Style */
+.block {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
   border-radius: 8px;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.antenna-details h2 {
-  margin-top: 0;
-}
-
-.antenna-details button {
-  margin: 5px 0;
-  padding: 8px 12px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  user-select: none;
+  transition: transform 0.2s ease;
+  max-width: 150px; /* Shortened block */
+  text-align: center;
 }
 
-.antenna-details button:hover {
-  background-color: #0056b3;
+.block:hover {
+  transform: scale(1.1);
 }
 
-.antenna-details input[type="range"] {
-  width: 100%;
-  margin: 10px 0;
+/* Information Panel Section */
+.info-panel {
+  width: 35%;
+  padding: 20px;
+  border-left: 2px solid #ccc;
 }
 
-.antenna-details p {
+.info-box {
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.info-box h3 {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.info-box p {
   margin: 5px 0;
 }
+
+/* Connection Lines */
+.connection-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* To allow clicking on blocks without interfering with lines */
+}
+
+

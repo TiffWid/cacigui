@@ -1,217 +1,127 @@
-import React, { useState } from "react";
+import React, { useState, createRef } from "react";
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
+import Draggable from "react-draggable";
 
-const AntennaManager = () => {
-  const [antennas, setAntennas] = useState([]);
-  const [selectedAntenna, setSelectedAntenna] = useState(null);
+const DraggableBlocks = () => {
+  const [blocks, setBlocks] = useState([]);
+  const [selectedBlock, setSelectedBlock] = useState(null); // State to track the selected block for info display
+  const [connections, setConnections] = useState([]); // State to track connections between blocks
 
-  const [newAntennaName, setNewAntennaName] = useState(""); // New name input state
-  const [newAntennaInfo, setNewAntennaInfo] = useState(""); // New info input state
-
-  const addAntenna = () => {
-    if (!newAntennaName || !newAntennaInfo) {
-      alert("Please provide both name and info for the antenna.");
-      return;
-    }
-
-    const newAntenna = {
+  const addBlock = (type) => {
+    const newBlock = {
       id: Date.now(),
-      label: newAntennaName,
-      health: Math.floor(Math.random() * 100) + 1, // Random health value
-      info: newAntennaInfo,
-      signalsReceived: 0, // Count of signals received
-      signalsSent: 0, // Count of signals sent
-      location: 0, // Initial slider value
+      type,
+      nodeRef: createRef(),
+      x: 100, // Starting position X
+      y: 100, // Starting position Y
     };
-
-    setAntennas((prev) => [...prev, newAntenna]);
-    setNewAntennaName(""); // Clear name input
-    setNewAntennaInfo(""); // Clear info input
+    setBlocks([...blocks, newBlock]);
   };
 
-  const removeAntenna = (id) => {
-    setAntennas((prev) => prev.filter((antenna) => antenna.id !== id));
-    if (selectedAntenna?.id === id) {
-      setSelectedAntenna(null);
+  const handleClick = (id, type) => {
+    if (selectedBlock) {
+      // Create a connection if another block is already selected
+      setConnections([
+        ...connections,
+        { from: selectedBlock.id, to: id }
+      ]);
+      setSelectedBlock(null); // Reset selected block after making a connection
+    } else {
+      // Set the selected block to display the information in the side panel
+      setSelectedBlock({ id, type });
     }
   };
 
-  const handleAntennaClick = (antenna) => {
-    setSelectedAntenna(antenna);
+  const handleDragStop = (e, data, id) => {
+    const updatedBlocks = blocks.map((block) =>
+      block.id === id ? { ...block, x: data.x, y: data.y } : block
+    );
+    setBlocks(updatedBlocks);
   };
 
-  const handleNameChange = (e) => {
-    const updatedName = e.target.value;
-    setSelectedAntenna((prev) => ({ ...prev, label: updatedName }));
-    setAntennas((prev) =>
-      prev.map((antenna) =>
-        antenna.id === selectedAntenna.id
-          ? { ...antenna, label: updatedName }
-          : antenna
-      )
-    );
-  };
-
-  const handleSignalReceived = () => {
-    setSelectedAntenna((prev) => ({
-      ...prev,
-      signalsReceived: prev.signalsReceived + 1,
-    }));
-    setAntennas((prev) =>
-      prev.map((antenna) =>
-        antenna.id === selectedAntenna.id
-          ? { ...antenna, signalsReceived: antenna.signalsReceived + 1 }
-          : antenna
-      )
-    );
-  };
-
-  const handleSignalSent = () => {
-    setSelectedAntenna((prev) => ({
-      ...prev,
-      signalsSent: prev.signalsSent + 1,
-    }));
-    setAntennas((prev) =>
-      prev.map((antenna) =>
-        antenna.id === selectedAntenna.id
-          ? { ...antenna, signalsSent: antenna.signalsSent + 1 }
-          : antenna
-      )
-    );
-  };
-
-  const handleLocationChange = (e) => {
-    const newLocation = parseInt(e.target.value, 10);
-    setSelectedAntenna((prev) => ({ ...prev, location: newLocation }));
-    setAntennas((prev) =>
-      prev.map((antenna) =>
-        antenna.id === selectedAntenna.id
-          ? { ...antenna, location: newLocation }
-          : antenna
-      )
-    );
+  const getBlockPosition = (id) => {
+    const block = blocks.find((block) => block.id === id);
+    return block ? { x: block.x + 50, y: block.y + 50 } : { x: 0, y: 0 }; // Adjust to center of block
   };
 
   return (
-    <section className="antenna-manager">
-      <div className="styling">
-      <div className="antennas">
-        {antennas.map((antenna) => (
-          <div
-            className="antenna"
-            key={antenna.id}
-            onClick={() => handleAntennaClick(antenna)}
+    <div className="container">
+      <div className="draggable-container">
+        <div className="button-container">
+          <button className="button" onClick={() => addBlock("RX Antenna")}>
+            Add RX Antenna
+          </button>
+          <button className="button" onClick={() => addBlock("TX Antenna")}>
+            Add TX Antenna
+          </button>
+          <button className="button" onClick={() => addBlock("Relay")}>
+            Add Relay
+          </button>
+        </div>
+
+        <svg className="connection-lines">
+          {/* Render connections */}
+          {connections.map((connection, index) => {
+            const fromPosition = getBlockPosition(connection.from);
+            const toPosition = getBlockPosition(connection.to);
+            return (
+              <line
+                key={index}
+                x1={fromPosition.x} // Adjust for center of block
+                y1={fromPosition.y} // Adjust for center of block
+                x2={toPosition.x} // Adjust for center of block
+                y2={toPosition.y} // Adjust for center of block
+                stroke="black"
+                strokeWidth="2"
+              />
+            );
+          })}
+        </svg>
+
+        {blocks.map((block) => (
+          <Draggable
+            key={block.id}
+            nodeRef={block.nodeRef}
+            defaultPosition={{ x: block.x, y: block.y }}
+            onStop={(e, data) => handleDragStop(e, data, block.id)}
           >
-            <div className="info">
-              <p>{antenna.label}</p>
-              <div className="health-bar">
-                <div
-                  className="health-bar-fill"
-                  style={{ width: `${antenna.health}%` }}
-                ></div>
-              </div>
+            <div
+              ref={block.nodeRef}
+              className="block"
+              onClick={() => handleClick(block.id, block.type)}
+            >
+              {block.type}
             </div>
-            <div className="remove">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeAntenna(antenna.id);
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          </div>
+          </Draggable>
         ))}
       </div>
 
-      <div className="add-antenna">
-        <h3>Add New Antenna</h3>
-        <div>
-          <label>
-            <strong>Name:</strong>
-            <input
-              type="text"
-              value={newAntennaName}
-              onChange={(e) => setNewAntennaName(e.target.value)}
-              placeholder="Enter antenna name"
-            />
-          </label>
-        </div>
-        <div>
-          <label>
-            <strong>Info:</strong>
-            <textarea
-              value={newAntennaInfo}
-              onChange={(e) => setNewAntennaInfo(e.target.value)}
-              placeholder="Enter antenna info"
-            />
-          </label>
-        </div>
-        <button type="button" onClick={addAntenna}>
-          Add
-        </button>
-      </div>
-      </div>
-      <div className="content">
-        {selectedAntenna ? (
-          <div className="antenna-details">
-            <h2>Edit Antenna</h2>
-            <label>
-              <strong>Name:</strong>
-              <input
-                type="text"
-                value={selectedAntenna.label}
-                onChange={handleNameChange}
-              />
-            </label>
-            <p>
-              <strong>Health:</strong> {selectedAntenna.health}%
-            </p>
-            <p>
-              <strong>Info:</strong> {selectedAntenna.info}
-            </p>
-            <p>
-              <strong>Signals Received:</strong>{" "}
-              {selectedAntenna.signalsReceived}
-            </p>
-            <p>
-              <strong>Signals Sent:</strong> {selectedAntenna.signalsSent}
-            </p>
-            <div>
-              <button onClick={handleSignalReceived}>Signal Received</button>
-              <button onClick={handleSignalSent}>Signal Sent</button>
-            </div>
-            <div>
-              <label>
-                <strong>Angle:</strong>
-                <input
-                  type="range"
-                  min="0"
-                  max="360"
-                  value={selectedAntenna.location}
-                  onChange={handleLocationChange}
-                />
-              </label>
-              <p>{selectedAntenna.location}°</p>
-            </div>
+      <div className="info-panel">
+        {selectedBlock ? (
+          <div className="info-box">
+            <h3>Block Information</h3>
+            <p><strong>Type:</strong> {selectedBlock.type}</p>
+            <p><strong>ID:</strong> {selectedBlock.id}</p>
           </div>
         ) : (
-          <p>Select an antenna to see its details.</p>
+          <div className="info-box">
+            <h3>Select a Block</h3>
+            <p>Click on a block to see more information or connect it to another block.</p>
+          </div>
         )}
       </div>
-    </section>
+    </div>
   );
 };
+
+export default DraggableBlocks;
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <AntennaManager />
+    <DraggableBlocks />
   </React.StrictMode>
 );
 
@@ -219,3 +129,6 @@ root.render(
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+
+
+
