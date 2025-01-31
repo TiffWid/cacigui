@@ -1,83 +1,88 @@
-/* General Layout */
 .container {
   display: flex;
-  justify-content: space-between;
-  padding: 20px;
-  position: relative;
+  width: 100vw;
+  height: 100vh;
 }
 
-/* Draggable Blocks Section */
 .draggable-container {
-  width: 60%;
-  position: relative; /* Important for absolute positioning of lines */
+  flex: 2;
+  position: relative;
+  background: #f0f0f0;
+  border-right: 2px solid #ccc;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.info-panel {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  overflow-y: auto;
 }
 
 .button-container {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .button {
-  padding: 10px 20px;
-  background-color: #ccc;
+  padding: 8px 12px;
+  background: gray;
+  color: white;
+  border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
-.button:hover {
-  background-color: #aaa;
-}
-
-/* Adjusted Block Style */
 .block {
-  padding: 10px 20px;
-  background-color: #3498db;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.2s ease;
-  max-width: 150px; /* Shortened block */
-  text-align: center;
-}
-
-.block:hover {
-  transform: scale(1.1);
-}
-
-/* Information Panel Section */
-.info-panel {
-  width: 35%;
-  padding: 20px;
-  border-left: 2px solid #ccc;
-}
-
-.info-box {
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.info-box h3 {
-  margin-bottom: 10px;
-  font-size: 1.2rem;
-}
-
-.info-box p {
-  margin: 5px 0;
-}
-
-/* Connection Lines */
-.connection-lines {
   position: absolute;
-  top: 0;
-  left: 0;
+  padding: 15px;
+  text-align: center;
+  cursor: grab;
+}
+
+.block-image {
+  background: lightblue;
+  color: black;
+  font-size: 20px;
+  padding: 20px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 120px;
+  height: 80px;
+}
+
+.arrows {
+  position: absolute;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* To allow clicking on blocks without interfering with lines */
+  pointer-events: none;
 }
 
+.arrow {
+  font-size: 50px;
+  position: absolute;
+  color: black;
+}
 
+.arrow-up { top: -15px; left: 50%; transform: translateX(-50%); }
+.arrow-right { right: -15px; top: 50%; transform: translateY(-50%); }
+.arrow-down { bottom: -15px; left: 50%; transform: translateX(-50%); }
+.arrow-left { left: -15px; top: 50%; transform: translateY(-50%); }
+
+.info-box {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  background: #fafafa;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
