@@ -91,3 +91,12 @@
 .saved-configs {
   margin-top: 20px;
 }
+
+.setting-style {
+  display: grid;
+}
+
+.setting-item {
+  text-align: left;
+  padding: 5px;
+}

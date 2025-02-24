@@ -1,4 +1,4 @@
-import React, { useState, createRef } from "react";
+import React, { useState, createRef, useEffect } from "react";
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
@@ -92,6 +92,55 @@ const DraggableBlocks = () => {
     }
   };
 
+  //Connecting backend and frontend
+  const updateBlockFromBackend = async (blockId) => {
+    try {
+      // Simulating a backend API call - replace with actual fetch request
+      const response = await fetch(`https://your-backend-api.com/block/${blockId}`);
+      const data = await response.json();
+  
+      setBlocks((prevBlocks) =>
+        prevBlocks.map((block) =>
+          block.id === blockId
+            ? {
+                ...block,
+                settings: {
+                  ...block.settings,
+                  power: data.power || block.settings.power,
+                  battery: data.battery || block.settings.battery,
+                  message: data.message || block.settings.message,
+                  bandwidth: data.bandwidth || block.settings.bandwidth,
+                },
+              }
+            : block
+        )
+      );
+  
+      if (selectedBlock && selectedBlock.id === blockId) {
+        setSelectedBlock((prev) => ({
+          ...prev,
+          settings: {
+            ...prev.settings,
+            power: data.power || prev.settings.power,
+            battery: data.battery || prev.settings.battery,
+            message: data.message || prev.settings.message,
+            bandwidth: data.bandwidth || prev.settings.bandwidth,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching block data:", error);
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      blocks.forEach((block) => updateBlockFromBackend(block.id));
+    }, 5000); // Fetch updates every 5 seconds
+  
+    return () => clearInterval(interval);
+  }, [blocks]);
+
   return (
     <div className="container">
       <div className="draggable-container">
@@ -145,6 +194,8 @@ const DraggableBlocks = () => {
 
               {selectedBlock.type === "TX Antenna" && (
                 <>
+                <div className="setting-style">
+                <div className ="setting-item"> 
                   <label>Power Level:</label>
                   <input
                     type="number"
@@ -153,8 +204,20 @@ const DraggableBlocks = () => {
                       setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, power: e.target.value } })
                     }
                   />
+                  </div>
+                  <div className ="setting-item"> 
+                  <label>Bandwidth:</label>
+                  <input
+                    type="number"
+                    value={selectedBlock.settings.bandwidth}
+                    onChange={(e) =>
+                      setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerLevel: e.target.value } })
+                    }
+                  />
+                  </div>
+                  <div className ="setting-item"> 
                   <label>
-                    RF On/Off:
+                    Transmit On/Off:
                     <input
                       type="checkbox"
                       checked={selectedBlock.settings.rfOn}
@@ -163,6 +226,8 @@ const DraggableBlocks = () => {
                       }
                     />
                   </label>
+                  </div>
+                  <div className ="setting-item"> 
                   <label>Message:</label>
                   <input
                     type="text"
@@ -171,14 +236,27 @@ const DraggableBlocks = () => {
                       setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, message: e.target.value } })
                     }
                   />
+                  </div>
                   <label>Upload Message File:</label>
                   <input type="file" onChange={handleFileChange} />
                   {selectedBlock.settings.file && <p>Selected File: {selectedBlock.settings.file.name}</p>}
+
+                  <label>Battery Level:</label>
+                  <input
+                    type="number"
+                    value={selectedBlock.settings.battery}
+                    onChange={(e) =>
+                      setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, power: e.target.value } })
+                    }
+                  />
+                </div>
                 </>
               )}
 
               {selectedBlock.type === "RX Antenna" && (
                 <>
+                <div className="setting-style">
+                  <div className ="setting-item">
                   <label>Received Message:</label>
                   <input
                     type="text"
@@ -187,6 +265,8 @@ const DraggableBlocks = () => {
                       setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, receivedMessage: e.target.value } })
                     }
                   />
+                  </div>
+                  <div className ="setting-item">
                   <label>Power Level:</label>
                   <input
                     type="number"
@@ -195,11 +275,35 @@ const DraggableBlocks = () => {
                       setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerLevel: e.target.value } })
                     }
                   />
+                  </div>
+                  <div className ="setting-item">
+                  <label>Bandwidth:</label>
+                  <input
+                    type="number"
+                    value={selectedBlock.settings.bandwidth}
+                    onChange={(e) =>
+                      setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerLevel: e.target.value } })
+                    }
+                  />
+                  </div>
+                  <div className ="setting-item">
+                  <label>Battery Level:</label>
+                  <input
+                    type="number"
+                    value={selectedBlock.settings.battery}
+                    onChange={(e) =>
+                      setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, power: e.target.value } })
+                    }
+                  />
+                  </div>
+                </div>
                 </>
               )}
 
               {selectedBlock.type.includes("Relay") && (
                 <>
+                  <div className="setting-style">
+                  <div className ="setting-item">
                   <label>Power In:</label>
                   <input
                     type="number"
@@ -208,6 +312,8 @@ const DraggableBlocks = () => {
                       setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerIn: e.target.value } })
                     }
                   />
+                  </div>
+                  <div className ="setting-item">
                   <label>Power Out:</label>
                   <input
                     type="number"
@@ -216,6 +322,18 @@ const DraggableBlocks = () => {
                       setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerOut: e.target.value } })
                     }
                   />
+                  </div>
+                  <div className ="setting-item">
+                  <label>Battery Level:</label>
+                  <input
+                    type="number"
+                    value={selectedBlock.settings.battery}
+                    onChange={(e) =>
+                      setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, power: e.target.value } })
+                    }
+                  />
+                  </div>
+                  </div>
                 </>
               )}
 
