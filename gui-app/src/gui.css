@@ -1,0 +1,33 @@
+.container {
+    max-width: 800px;
+    margin: auto;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+}
+
+.relay-card {
+    background-color: #e3f2fd;
+}
+
+.transmit-card {
+    background-color: #ffebee;
+}
+
+.receive-card {
+    background-color: #e8f5e9;
+}
+
+input {
+    margin-bottom: 10px;
+}
+
+button {
+    width: 100%;
+}
