@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RF Network Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            margin: auto;
+            border: 1px solid black;
+        }
+        .box {
+            position: absolute;
+            width: 120px;
+            height: 80px;
+            background-color: blue;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 10px;
+        }
+        .transmitter { top: 50px; left: 50px; }
+        .relay1 { top: 50px; right: 50px; }
+        .relay2 { bottom: 50px; right: 50px; }
+        .receiver { bottom: 50px; left: 50px; }
+        .obstruction {
+            position: absolute;
+            top: 150px;
+            left: 250px;
+            width: 300px;
+            height: 150px;
+            background-color: gray;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .panel {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid black;
+            display: inline-block;
+            background: #f0f0f0;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid black;
+            background: #dff0d8;
+            min-height: 50px;
+            white-space: pre-line;
+        }
+    </style>
+</head>
+<body>
+    <h1>RF Network Simulation</h1>
+    <div class="container">
+        <div class="box transmitter">Transmitter</div>
+        <div class="box relay1" id="relay1">Relay 1</div>
+        <div class="box relay2" id="relay2">Relay 2</div>
+        <div class="box receiver" id="receiver">Receiver</div>
+        <div class="obstruction">BUILDING/OBSTRUCTION</div>
+    </div>
+
+    <div class="panel">
+        <h3>Transmitter Settings</h3>
+        <label>Power Level: <input type="number" id="powerLevel"></label><br>
+        <label>RF On: <input type="checkbox" id="rfToggle"></label><br>
+        <label>Message: <input type="text" id="message"></label><br>
+        <button onclick="sendMessage()">Send Message</button>
+    </div>
+
+    <div class="output" id="outputBox">System Output</div>
+
+    <script>
+        let receivedMessage = "";
+
+        function sendMessage() {
+            let power = document.getElementById("powerLevel").value;
+            let rfOn = document.getElementById("rfToggle").checked;
+            let message = document.getElementById("message").value;
+            
+            if (!rfOn) {
+                document.getElementById("outputBox").innerText = "RF is off. Message not sent.";
+                return;
+            }
+            
+            let transmissionLog = `Transmitter sending message...\nPower: ${power}\nMessage: ${message}`;
+            transmissionLog += "\nMessage received at Relay 1...";
+            document.getElementById("relay1").innerText = `Relay 1\nPower: Normal\nMessage: ${message}`;
+            
+            transmissionLog += "\nMessage relayed to Relay 2...";
+            document.getElementById("relay2").innerText = `Relay 2\nPower: Normal\nMessage: ${message}`;
+            
+            transmissionLog += "\nMessage delivered to Receiver.";
+            receivedMessage = message;
+            document.getElementById("receiver").innerText = `Receiver\nPower: Normal\nMessage: ${receivedMessage}`;
+            
+            document.getElementById("outputBox").innerText = transmissionLog;
+        }
+    </script>
+</body>
+</html>
+
+

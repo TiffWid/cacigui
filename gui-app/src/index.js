@@ -10,6 +10,7 @@ import GoogleLoginButton from "./GoogleLoginButton";
 const ALLOWED_EMAILS = [
   "nehabijoy@vt.edu",
   "nehabijoy100@gmail.com",
+  "tiffanyawidjaja@gmail.com",
 ];
 
 const DraggableBlocks = () => {
