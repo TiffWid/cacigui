@@ -150,32 +150,101 @@ const DraggableBlocks = () => {
       </div>
 
       <div className="info-panel">
-        <div className="info-box">
-          {selectedBlock ? (
-            <>
-              <h3>{selectedBlock.type} Settings</h3>
-              <label>Power Level:</label>
-              <input type="number" value={selectedBlock.settings.power} />
-              <br />
-              <label>Battery Level:</label>
-              <input type="number" value={selectedBlock.settings.battery} />
-              <br />
-              <label>Bandwidth:</label>
-              <input type="number" value={selectedBlock.settings.bandwidth} />
-              <br />
-              <label>Message:</label>
-              <input type="text" value={selectedBlock.settings.message} />
-              <br />
-              <label>Upload Message File:</label>
-              <input type="file" onChange={handleFileChange} />
-            </>
-          ) : (
-            <div>
-              <h3>Select a Block</h3>
-              <p>Click on a block to configure settings.</p>
-            </div>
-          )}
-        </div>
+        {selectedBlock ? (
+          <div className="info-box">
+            <h3>{selectedBlock.type} Settings</h3>
+
+            {selectedBlock.type === "TX Antenna" && (
+              <>
+                <label>Power Level:</label>
+                <input
+                  type="number"
+                  value={selectedBlock.settings.power}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, power: e.target.value } })
+                  }
+                />
+                <label>
+                  RF On/Off:
+                  <input
+                    type="checkbox"
+                    checked={selectedBlock.settings.rfOn}
+                    onChange={() =>
+                      setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, rfOn: !selectedBlock.settings.rfOn } })
+                    }
+                  />
+                </label>
+                <label>Message:</label>
+                <input
+                  type="text"
+                  value={selectedBlock.settings.message}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, message: e.target.value } })
+                  }
+                />
+                <label>Upload Message File:</label>
+                <input type="file" onChange={handleFileChange} />
+                {selectedBlock.settings.file && <p>Selected File: {selectedBlock.settings.file.name}</p>}
+              </>
+            )}
+
+            {selectedBlock.type === "RX Antenna" && (
+              <>
+                <label>Received Message:</label>
+                <input
+                  type="text"
+                  value={selectedBlock.settings.receivedMessage}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, receivedMessage: e.target.value } })
+                  }
+                />
+                <label>Power Level:</label>
+                <input
+                  type="number"
+                  value={selectedBlock.settings.powerLevel}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerLevel: e.target.value } })
+                  }
+                />
+              </>
+            )}
+
+            {selectedBlock.type.includes("Relay") && (
+              <>
+                <label>Power In:</label>
+                <input
+                  type="number"
+                  value={selectedBlock.settings.powerIn}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerIn: e.target.value } })
+                  }
+                />
+                <label>Power Out:</label>
+                <input
+                  type="number"
+                  value={selectedBlock.settings.powerOut}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerOut: e.target.value } })
+                  }
+                />
+              </>
+            )}
+
+            {selectedBlock.type !== "Object" && (
+              <div className="checkbox-group">
+                <label><input type="checkbox" checked={selectedBlock.arrows.top} onChange={() => toggleArrow("top")} /> Top Arrow</label>
+                <label><input type="checkbox" checked={selectedBlock.arrows.right} onChange={() => toggleArrow("right")} /> Right Arrow</label>
+                <label><input type="checkbox" checked={selectedBlock.arrows.bottom} onChange={() => toggleArrow("bottom")} /> Bottom Arrow</label>
+                <label><input type="checkbox" checked={selectedBlock.arrows.left} onChange={() => toggleArrow("left")} /> Left Arrow</label>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="info-box">
+            <h3>Select a Block</h3>
+            <p>Click on a block to configure settings.</p>
+          </div>
+        )}
 
         <div className="info-box">
           <input type="text" value={configName} onChange={(e) => setConfigName(e.target.value)}
