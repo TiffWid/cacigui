@@ -96,14 +96,14 @@
             
             let transmissionLog = `Transmitter sending message...\nPower: ${power}\nMessage: ${message}`;
             transmissionLog += "\nMessage received at Relay 1...";
-            document.getElementById("relay1").innerText = `Relay 1\nPower: Normal\nMessage: ${message}`;
+            document.getElementById("relay1").innerText = `Relay 1\nPower: ${power}`;
             
             transmissionLog += "\nMessage relayed to Relay 2...";
-            document.getElementById("relay2").innerText = `Relay 2\nPower: Normal\nMessage: ${message}`;
+            document.getElementById("relay2").innerText = `Relay 2\nPower: ${power}`;
             
             transmissionLog += "\nMessage delivered to Receiver.";
             receivedMessage = message;
-            document.getElementById("receiver").innerText = `Receiver\nPower: Normal\nMessage: ${receivedMessage}`;
+            document.getElementById("receiver").innerText = `Receiver\nPower: ${power}\nMessage: ${receivedMessage}`;
             
             document.getElementById("outputBox").innerText = transmissionLog;
         }
