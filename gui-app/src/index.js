@@ -69,14 +69,41 @@ const DraggableBlocks = () => {
     }
   };
 
-  const handleFileChange = (e) => {
-    if (selectedBlock) {
-      const file = e.target.files[0];
-      setSelectedBlock({
-        ...selectedBlock,
-        settings: { ...selectedBlock.settings, file },
-      });
+  const getRelayBlock = (relayNumber) => {
+    return blocks.find((block) => block.type === `Relay ${relayNumber}`) || null;
+  };
+
+  // const getTxAntennaBlocks = () => {
+  //   return blocks.filter((block) => block.type === "TX Antenna");
+  // };
+
+  // const getRxAntennaBlocks = () => {
+  //   return blocks.filter((block) => block.type === "RX Antenna");
+  // };
+
+  //If a file is uploaded, run this function to run the python script
+  const handleTxFileUpload = (e, blockId) => {
+    const file = e.target.files[0];
+  
+    if (!file) return; // If no file is selected, exit the function
+  
+    setBlocks((prevBlocks) =>
+      prevBlocks.map((block) =>
+        block.id === blockId && block.type === "TX Antenna"
+          ? { ...block, settings: { ...block.settings, file } }
+          : block
+      )
+    );
+  
+    if (selectedBlock && selectedBlock.id === blockId) {
+      setSelectedBlock((prev) => ({
+        ...prev,
+        settings: { ...prev.settings, file },
+      }));
     }
+
+    console.log(`File uploaded to TX Antenna (ID: ${blockId}):`, file.name);
+
   };
 
   const handleDrag = (e, data, block) => {
@@ -164,16 +191,6 @@ const DraggableBlocks = () => {
                     setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, power: e.target.value } })
                   }
                 />
-                <label>
-                  RF On/Off:
-                  <input
-                    type="checkbox"
-                    checked={selectedBlock.settings.rfOn}
-                    onChange={() =>
-                      setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, rfOn: !selectedBlock.settings.rfOn } })
-                    }
-                  />
-                </label>
                 <label>Message:</label>
                 <input
                   type="text"
@@ -183,7 +200,7 @@ const DraggableBlocks = () => {
                   }
                 />
                 <label>Upload Message File:</label>
-                <input type="file" onChange={handleFileChange} />
+                <input type="file" onChange={(e) => handleTxFileUpload(e, selectedBlock.id)} />
                 {selectedBlock.settings.file && <p>Selected File: {selectedBlock.settings.file.name}</p>}
               </>
             )}
