@@ -13,11 +13,10 @@ const ALLOWED_EMAILS = [
   "tiffanyawidjaja@gmail.com",
 ];
 
-const DraggableBlocks = () => {
+const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
   const [blocks, setBlocks] = useState([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [relayCount, setRelayCount] = useState(0);
-  const [savedConfigs, setSavedConfigs] = useState({});
   const [configName, setConfigName] = useState("");
 
   const addBlock = (type) => {
@@ -191,18 +190,78 @@ const DraggableBlocks = () => {
     setBlocks(newBlocks);
   };
 
-  const saveConfiguration = () => {
-    if (configName.trim()) {
-      setSavedConfigs({ ...savedConfigs, [configName]: blocks });
-      setConfigName("");
+  const saveConfiguration = async () => {
+    if (!configName.trim()) return;
+  
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+  
+      if (!session?.user) throw new Error("User not authenticated");
+  
+      const userId = session.user.id;
+  
+      const sanitizedBlocks = blocks.map(({ nodeRef, ...rest }) => rest); // strip non-serializables
+  
+      const { data, error } = await supabase
+        .from("configurations")
+        .upsert(
+          [
+            {
+              user_id: userId,
+              config_name: configName,
+              blocks: sanitizedBlocks,
+            },
+          ],
+          { onConflict: ["user_id", "config_name"] }
+        );
+  
+      if (error) throw error;
+  
+      alert("Configuration saved!");
+    } catch (err) {
+      console.error("Failed to save:", err.message);
+      alert("Failed to save configuration.");
     }
   };
+  
 
   const loadConfiguration = (name) => {
     if (savedConfigs[name]) {
       setBlocks(savedConfigs[name]);
     }
   };
+  
+  const deleteConfiguration = async (name) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+  
+      if (!session?.user) throw new Error("User not authenticated");
+  
+      const userId = session.user.id;
+  
+      const { error } = await supabase
+        .from("configurations")
+        .delete()
+        .match({ user_id: userId, config_name: name });
+  
+      if (error) throw error;
+  
+      // Remove from local state
+      const updatedConfigs = { ...savedConfigs };
+      delete updatedConfigs[name];
+      setSavedConfigs(updatedConfigs);
+  
+      alert(`Deleted configuration: ${name}`);
+    } catch (err) {
+      console.error("Failed to delete configuration:", err.message);
+      alert("Failed to delete configuration.");
+    }
+  };
+  
 
   const updateBlockFromBackend = async (blockId) => {
     try {
@@ -246,9 +305,33 @@ const DraggableBlocks = () => {
           {blocks.map((block) => (
             <Draggable key={block.id} nodeRef={block.nodeRef} bounds="parent"
               position={{ x: block.x, y: block.y }} onStop={(e, data) => handleDrag(e, data, block)}>
-              <div ref={block.nodeRef} className="block" onClick={() => handleClick(block)}>
-                <div className="block-image">{block.type}</div>
-              </div>
+            <div ref={block.nodeRef} className="block" onClick={() => handleClick(block)}>
+            {/* Render directional arrows based on the block's `arrows` state */}
+                {block.arrows.top && (
+                <div style={{ position: "absolute", top: -20, left: "50%", transform: "translateX(-50%)", fontWeight: "bold", fontSize: "20px", zIndex: 10 }}>
+                  ↑
+                </div>
+              )}
+              {block.arrows.right && (
+                <div style={{ position: "absolute", top: "50%", right: -20, transform: "translateY(-50%)", fontWeight: "bold", fontSize: "20px", zIndex: 10 }}>
+                  →
+                </div>
+              )}
+              {block.arrows.bottom && (
+                <div style={{ position: "absolute", bottom: -20, left: "50%", transform: "translateX(-50%)", fontWeight: "bold", fontSize: "20px", zIndex: 10 }}>
+                  ↓
+                </div>
+              )}
+              {block.arrows.left && (
+                <div style={{ position: "absolute", top: "50%", left: -20, transform: "translateY(-50%)", fontWeight: "bold", fontSize: "20px", zIndex: 10 }}>
+                  ←
+                </div>
+            )}
+
+
+  <div className="block-image">{block.type}</div>
+</div>
+
             </Draggable>
           ))}
         </div>
@@ -347,58 +430,95 @@ const DraggableBlocks = () => {
           <button className="button" onClick={saveConfiguration}>Save Configuration</button>
           <h4>Saved Configurations:</h4>
           {Object.keys(savedConfigs).map((name) => (
-            <button key={name} onClick={() => loadConfiguration(name)}>{name}</button>
-          ))}
+          <div key={name} style={{ marginBottom: "5px" }}>
+            <button onClick={() => loadConfiguration(name)}>{name}</button>
+            <button
+              style={{
+                marginLeft: "5px",
+                color: "white",
+                backgroundColor: "red",
+                border: "none",
+                padding: "4px 8px",
+                cursor: "pointer",
+              }}
+              onClick={() => deleteConfiguration(name)}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+
         </div>
       </div>
     </div>
   );
-};
 
+
+
+  
+};
 const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [savedConfigs, setSavedConfigs] = useState({});
 
   useEffect(() => {
-    const fetchUser = async () => {
-        const { data, error } = await supabase.auth.getSession();
+    const fetchSessionAndConfigs = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
-        if (error) {
-            console.error("Error fetching session:", error);
-            return;
-        }
-
-        if (data.session) {
-            const userEmail = data.session.user.email;
-            console.log("User logged in:", userEmail);
-
-            if (ALLOWED_EMAILS.includes(userEmail)) {
-                setUser(data.session.user);
-            } else {
-                console.warn("Unauthorized email:", userEmail);
-                await supabase.auth.signOut();
-                alert("Access denied. Your email is not authorized.");
-            }
-        } else {
-            console.log("No active session. Waiting for login...");
-        }
+      if (error) {
+        console.error("Error fetching session:", error.message);
         setLoading(false);
+        return;
+      }
+
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
+
+      setUser(session.user);
+
+      const userId = session.user.id;
+
+      const { data, error: configError } = await supabase
+        .from("configurations")
+        .select("config_name, blocks")
+        .eq("user_id", userId);
+
+      if (configError) {
+        console.error("Error fetching configs:", configError.message);
+        setLoading(false);
+        return;
+      }
+
+      const configs = {};
+      data.forEach((row) => {
+        configs[row.config_name] = row.blocks;
+      });
+
+      setSavedConfigs(configs);
+      setLoading(false);
     };
 
-    fetchUser();
-}, []);
-
+    fetchSessionAndConfigs();
+  }, []);
 
   return loading ? <h2>Loading...</h2> : (
     <div>
       <div style={{ backgroundColor: "red", padding: "10px", textAlign: "center" }}>
-        <h2>CACI GUI</h2>
+        <h2>Communication Relay System​ GUI</h2>
         {user ? <p>✅ Logged in as {user.email}</p> : <GoogleLoginButton />}
       </div>
-      {user ? <DraggableBlocks /> : null}
+      {user ? <DraggableBlocks savedConfigs={savedConfigs} setSavedConfigs={setSavedConfigs} /> : null}
     </div>
   );
 };
+
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 reportWebVitals();
