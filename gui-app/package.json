@@ -3,13 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.3",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.8.4",
+    "child_process": "^1.0.2",
+    "express": "^4.21.2",
+    "python-shell": "^5.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-draggable": "^4.4.6",
     "react-scripts": "^5.0.1",
+    "socket.io-client": "^4.8.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -37,6 +43,12 @@
     ]
   },
   "devDependencies": {
-    "ajv": "^8.17.1"
-  }
+    "ajv": "^8.17.1",
+    "supabase": "^2.20.5"
+  },
+  "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

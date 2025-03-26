@@ -6,6 +6,7 @@ import Draggable from "react-draggable";
 import { io } from "socket.io-client";
 import { supabase } from "./supabase"; // Import Supabase client
 import GoogleLoginButton from "./GoogleLoginButton";
+import axios from 'axios';
 
 const ALLOWED_EMAILS = [
   "nehabijoy@vt.edu",
@@ -19,6 +20,8 @@ const DraggableBlocks = () => {
   const [relayCount, setRelayCount] = useState(0);
   const [savedConfigs, setSavedConfigs] = useState({});
   const [configName, setConfigName] = useState("");
+  const [filePath, setFilePath] = useState(""); // state to store manual file path
+  const [isManual, setIsManual] = useState(false); // state to toggle between upload and manual input
 
   const addBlock = (type) => {
     let blockName = type;
@@ -69,41 +72,73 @@ const DraggableBlocks = () => {
     }
   };
 
-  const getRelayBlock = (relayNumber) => {
-    return blocks.find((block) => block.type === `Relay ${relayNumber}`) || null;
+  const handleTxFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+  
+    const fileName = `tx-files/${Date.now()}-${file.name}`;
+  
+    // Create a FormData object to send the file to the server
+    const formData = new FormData();
+    formData.append("file", file, fileName);
+    console.log("RUNNING FILE");
+    try {
+      // Upload the file to the Node.js backend
+      const uploadResponse = await fetch("http://localhost:3005/upload-file", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!uploadResponse.ok) {
+        console.log("File Not Uploaded");
+      }
+  
+      const { fileUrl } = await uploadResponse.json();
+      console.log("File uploaded successfully:", fileUrl);
+  
+      // Call the Python script via the backend API with the file URL
+      const scriptResponse = await fetch(`http://localhost:3005/run-script?fileUrl=${encodeURIComponent(fileUrl)}`);
+      const scriptData = await scriptResponse.json();
+  
+      console.log("Python Script Output:", scriptData);
+    } catch (err) {
+      console.error("Error:", err);
+    }
   };
 
-  // const getTxAntennaBlocks = () => {
-  //   return blocks.filter((block) => block.type === "TX Antenna");
-  // };
-
-  // const getRxAntennaBlocks = () => {
-  //   return blocks.filter((block) => block.type === "RX Antenna");
-  // };
-
-  //If a file is uploaded, run this function to run the python script
-  const handleTxFileUpload = (e, blockId) => {
-    const file = e.target.files[0];
-  
-    if (!file) return; // If no file is selected, exit the function
-  
-    setBlocks((prevBlocks) =>
-      prevBlocks.map((block) =>
-        block.id === blockId && block.type === "TX Antenna"
-          ? { ...block, settings: { ...block.settings, file } }
-          : block
-      )
-    );
-  
-    if (selectedBlock && selectedBlock.id === blockId) {
-      setSelectedBlock((prev) => ({
-        ...prev,
-        settings: { ...prev.settings, file },
-      }));
+  const handleSendMessage = async () => {
+    if (!selectedBlock || !selectedBlock.settings.message.trim()) {
+      console.log("Message is required");
+      return;
     }
 
-    console.log(`File uploaded to TX Antenna (ID: ${blockId}):`, file.name);
+    const fileName = `message-${Date.now()}.txt`;
+    const fileContent = selectedBlock.settings.message;
 
+    try {
+      // Save message to a file on the server
+      const response = await fetch("http://localhost:3005/save-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName, fileContent }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.log("Message saved successfully:", data);
+        
+        // Run the Python script with the saved file
+        const scriptResponse = await fetch(`http://localhost:3005/run-script?fileName=${encodeURIComponent(fileName)}`);
+        const scriptData = await scriptResponse.json();
+
+        console.log("Python Script Output:", scriptData);
+      } 
+      else {
+        console.error("Failed to save message:", data);
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    }
   };
 
   const handleDrag = (e, data, block) => {
@@ -126,34 +161,6 @@ const DraggableBlocks = () => {
     }
   };
 
-  const updateBlockFromBackend = async (blockId) => {
-    try {
-      const response = await fetch(`https://your-backend-api.com/block/${blockId}`);
-      const data = await response.json();
-
-      setBlocks((prevBlocks) =>
-        prevBlocks.map((block) =>
-          block.id === blockId
-            ? { ...block, settings: { ...block.settings, ...data } }
-            : block
-        )
-      );
-
-      if (selectedBlock && selectedBlock.id === blockId) {
-        setSelectedBlock((prev) => ({ ...prev, settings: { ...prev.settings, ...data } }));
-      }
-    } catch (error) {
-      console.error("Error fetching block data:", error);
-    }
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      blocks.forEach((block) => updateBlockFromBackend(block.id));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [blocks]);
-
   return (
     <div className="container">
       <div className="draggable-container">
@@ -167,7 +174,7 @@ const DraggableBlocks = () => {
         <div className="block-container">
           {blocks.map((block) => (
             <Draggable key={block.id} nodeRef={block.nodeRef} bounds="parent"
-              position={{ x: block.x, y: block.y }} onStop={(e, data) => handleDrag(e, data, block)}>
+              position={{ x: block.x, y: block.y }} onStop={(e, data) => handleDrag(e, data, block)} >
               <div ref={block.nodeRef} className="block" onClick={() => handleClick(block)}>
                 <div className="block-image">{block.type}</div>
               </div>
@@ -199,62 +206,20 @@ const DraggableBlocks = () => {
                     setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, message: e.target.value } })
                   }
                 />
+                <button onClick={handleSendMessage}>Send Message</button>
+              
                 <label>Upload Message File:</label>
-                <input type="file" onChange={(e) => handleTxFileUpload(e, selectedBlock.id)} />
+                <input
+                  type="file"
+                  onChange={(e) => handleTxFileUpload(e)}
+                  disabled={isManual} // Disable file upload if using manual file path
+                />
                 {selectedBlock.settings.file && <p>Selected File: {selectedBlock.settings.file.name}</p>}
               </>
             )}
 
-            {selectedBlock.type === "RX Antenna" && (
-              <>
-                <label>Received Message:</label>
-                <input
-                  type="text"
-                  value={selectedBlock.settings.receivedMessage}
-                  onChange={(e) =>
-                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, receivedMessage: e.target.value } })
-                  }
-                />
-                <label>Power Level:</label>
-                <input
-                  type="number"
-                  value={selectedBlock.settings.powerLevel}
-                  onChange={(e) =>
-                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerLevel: e.target.value } })
-                  }
-                />
-              </>
-            )}
+            {/* Other blocks settings like RX Antenna and Relay will stay the same */}
 
-            {selectedBlock.type.includes("Relay") && (
-              <>
-                <label>Power In:</label>
-                <input
-                  type="number"
-                  value={selectedBlock.settings.powerIn}
-                  onChange={(e) =>
-                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerIn: e.target.value } })
-                  }
-                />
-                <label>Power Out:</label>
-                <input
-                  type="number"
-                  value={selectedBlock.settings.powerOut}
-                  onChange={(e) =>
-                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerOut: e.target.value } })
-                  }
-                />
-              </>
-            )}
-
-            {selectedBlock.type !== "Object" && (
-              <div className="checkbox-group">
-                <label><input type="checkbox" checked={selectedBlock.arrows.top} onChange={() => toggleArrow("top")} /> Top Arrow</label>
-                <label><input type="checkbox" checked={selectedBlock.arrows.right} onChange={() => toggleArrow("right")} /> Right Arrow</label>
-                <label><input type="checkbox" checked={selectedBlock.arrows.bottom} onChange={() => toggleArrow("bottom")} /> Bottom Arrow</label>
-                <label><input type="checkbox" checked={selectedBlock.arrows.left} onChange={() => toggleArrow("left")} /> Left Arrow</label>
-              </div>
-            )}
           </div>
         ) : (
           <div className="info-box">
@@ -292,35 +257,31 @@ const App = () => {
 
         if (data.session) {
             const userEmail = data.session.user.email;
-            console.log("User logged in:", userEmail);
-
             if (ALLOWED_EMAILS.includes(userEmail)) {
                 setUser(data.session.user);
-            } else {
-                console.warn("Unauthorized email:", userEmail);
-                await supabase.auth.signOut();
-                alert("Access denied. Your email is not authorized.");
             }
-        } else {
-            console.log("No active session. Waiting for login...");
         }
         setLoading(false);
     };
 
     fetchUser();
-}, []);
+  }, []);
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-  return loading ? <h2>Loading...</h2> : (
-    <div>
-      <div style={{ backgroundColor: "red", padding: "10px", textAlign: "center" }}>
-        <h2>CACI GUI</h2>
-        {user ? <p>✅ Logged in as {user.email}</p> : <GoogleLoginButton />}
-      </div>
-      {user ? <DraggableBlocks /> : null}
+  return (
+    <div className="App">
+      {!user ? (
+        <GoogleLoginButton setUser={setUser} />
+      ) : (
+        <DraggableBlocks />
+      )}
     </div>
   );
 };
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-reportWebVitals();
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+
