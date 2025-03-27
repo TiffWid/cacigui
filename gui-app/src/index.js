@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 import Draggable from "react-draggable";
-import { io } from "socket.io-client";
 import { supabase } from "./supabase"; // Import Supabase client
 import GoogleLoginButton from "./GoogleLoginButton";
 import axios from 'axios';
@@ -48,7 +47,28 @@ const DraggableBlocks = () => {
         : {},
     };
 
+    // After adding a block, check if it's an RX Antenna and run the corresponding Python script
+    if (type === "RX Antenna") {
+      runReceiveScript();
+    }
+
     setBlocks([...blocks, newBlock]);
+  };
+
+  const runReceiveScript = async () => {
+    try {
+      // Send a request to the receiving server (Server 2) to trigger the Python receive script
+      const response = await fetch("http://localhost:3006/run-receive-script", { method: "GET" });
+
+      if (!response.ok) {
+        console.error("Failed to run receive script.");
+      }
+
+      const data = await response.json();
+      console.log("Receive script output:", data);
+    } catch (err) {
+      console.error("Error running receive script:", err);
+    }
   };
 
   const handleClick = (block) => {
@@ -75,31 +95,31 @@ const DraggableBlocks = () => {
   const handleTxFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-  
+
     const fileName = `tx-files/${Date.now()}-${file.name}`;
-  
-    // Create a FormData object to send the file to the server
+
+    // Create a FormData object to send the file to the transmitting server (Server 1)
     const formData = new FormData();
     formData.append("file", file, fileName);
-    console.log("RUNNING FILE");
+
     try {
-      // Upload the file to the Node.js backend
+      // Upload the file to the transmitting Node.js backend (Server 1)
       const uploadResponse = await fetch("http://localhost:3005/upload-file", {
         method: "POST",
         body: formData,
       });
-  
+
       if (!uploadResponse.ok) {
         console.log("File Not Uploaded");
       }
-  
+
       const { fileUrl } = await uploadResponse.json();
       console.log("File uploaded successfully:", fileUrl);
-  
-      // Call the Python script via the backend API with the file URL
+
+      // Call the transmitting Python script via the backend API (Server 1) with the file URL
       const scriptResponse = await fetch(`http://localhost:3005/run-script?fileUrl=${encodeURIComponent(fileUrl)}`);
       const scriptData = await scriptResponse.json();
-  
+
       console.log("Python Script Output:", scriptData);
     } catch (err) {
       console.error("Error:", err);
@@ -116,7 +136,7 @@ const DraggableBlocks = () => {
     const fileContent = selectedBlock.settings.message;
 
     try {
-      // Save message to a file on the server
+      // Save message to a file on the transmitting server (Server 1)
       const response = await fetch("http://localhost:3005/save-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,14 +146,13 @@ const DraggableBlocks = () => {
       const data = await response.json();
       if (response.ok) {
         console.log("Message saved successfully:", data);
-        
-        // Run the Python script with the saved file
+
+        // Run the transmitting Python script (Server 1) with the saved file
         const scriptResponse = await fetch(`http://localhost:3005/run-script?fileName=${encodeURIComponent(fileName)}`);
         const scriptData = await scriptResponse.json();
 
         console.log("Python Script Output:", scriptData);
-      } 
-      else {
+      } else {
         console.error("Failed to save message:", data);
       }
     } catch (err) {
@@ -207,19 +226,14 @@ const DraggableBlocks = () => {
                   }
                 />
                 <button onClick={handleSendMessage}>Send Message</button>
-              
+
                 <label>Upload Message File:</label>
                 <input
                   type="file"
                   onChange={(e) => handleTxFileUpload(e)}
-                  disabled={isManual} // Disable file upload if using manual file path
                 />
-                {selectedBlock.settings.file && <p>Selected File: {selectedBlock.settings.file.name}</p>}
               </>
             )}
-
-            {/* Other blocks settings like RX Antenna and Relay will stay the same */}
-
           </div>
         ) : (
           <div className="info-box">
@@ -284,4 +298,6 @@ const App = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
+
+
 

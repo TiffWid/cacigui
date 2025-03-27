@@ -25,8 +25,9 @@ from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import uhd
 import time
-import pkt_xmt_psk_epy_block_0 as epy_block_0  # embedded python block
 import sip
+import pkt_xmt_psk_epy_block_0 as epy_block_0  # embedded python block
+
 
 
 
