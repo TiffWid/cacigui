@@ -180,6 +180,34 @@ const DraggableBlocks = () => {
     }
   };
 
+  const updateBlockFromBackend = async (blockId) => {
+    try {
+      const response = await fetch(`https://your-backend-api.com/block/${blockId}`);
+      const data = await response.json();
+
+      setBlocks((prevBlocks) =>
+        prevBlocks.map((block) =>
+          block.id === blockId
+            ? { ...block, settings: { ...block.settings, ...data } }
+            : block
+        )
+      );
+
+      if (selectedBlock && selectedBlock.id === blockId) {
+        setSelectedBlock((prev) => ({ ...prev, settings: { ...prev.settings, ...data } }));
+      }
+    } catch (error) {
+      console.error("Error fetching block data:", error);
+    }
+  };
+
+  useEffect(() => {
+      const interval = setInterval(() => {
+        blocks.forEach((block) => updateBlockFromBackend(block.id));
+      }, 5000);
+      return () => clearInterval(interval);
+    }, [blocks]);
+
   return (
     <div className="container">
       <div className="draggable-container">
@@ -231,6 +259,48 @@ const DraggableBlocks = () => {
                 <input
                   type="file"
                   onChange={(e) => handleTxFileUpload(e)}
+                />
+              </>
+            )}
+
+          {selectedBlock.type === "RX Antenna" && (
+              <>
+                <label>Received Message:</label>
+                <input
+                  type="text"
+                  value={selectedBlock.settings.receivedMessage}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, receivedMessage: e.target.value } })
+                  }
+                />
+                <label>Power Level:</label>
+                <input
+                  type="number"
+                  value={selectedBlock.settings.powerLevel}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerLevel: e.target.value } })
+                  }
+                />
+              </>
+            )}
+
+            {selectedBlock.type.includes("Relay") && (
+              <>
+                <label>Power In:</label>
+                <input
+                  type="number"
+                  value={selectedBlock.settings.powerIn}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerIn: e.target.value } })
+                  }
+                />
+                <label>Power Out:</label>
+                <input
+                  type="number"
+                  value={selectedBlock.settings.powerOut}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerOut: e.target.value } })
+                  }
                 />
               </>
             )}
@@ -298,6 +368,7 @@ const App = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
+reportWebVitals();
 
 
 

@@ -360,9 +360,13 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
                     setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, message: e.target.value } })
                   }
                 />
+                <button onClick={handleSendMessage}>Send Message</button>
+
                 <label>Upload Message File:</label>
-                <input type="file" onChange={(e) => handleTxFileUpload(e, selectedBlock.id)} />
-                {selectedBlock.settings.file && <p>Selected File: {selectedBlock.settings.file.name}</p>}
+                <input
+                  type="file"
+                  onChange={(e) => handleTxFileUpload(e)}
+                />
               </>
             )}
 
