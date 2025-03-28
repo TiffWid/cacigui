@@ -49,22 +49,45 @@ app.get("/run-script", (req, res) => {
   }
 
   const filePath = path.join(UPLOADS_DIR, fileName);
+  const tmpOutput = path.join(__dirname, "output.tmp");
+  const finalOutput = path.join(__dirname, "output.txt");
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: "File not found." });
   }
 
-  // Correct path to the Python script inside "SDR-GUI" folder
+  // Command to run pkt_xmt.py
   const pythonCommand = `"C:\\Users\\Tiffa\\radioconda\\python.exe" "${PYTHON_SCRIPT_PATH}" --InFile="${filePath}"`;
 
   exec(pythonCommand, (error, stdout, stderr) => {
     if (error) {
-      console.error("Error executing script:", error);
-      return res.status(500).json({ error: "Failed to execute script.", details: error.message });
+      console.error("Error executing pkt_xmt.py:", error);
+      return res.status(500).json({ error: "Failed to execute pkt_xmt.py", details: error.message });
     }
 
-    console.log("Python Script Output:", stdout);
-    res.json({ message: "Script executed successfully", output: stdout, error: stderr });
+    console.log("pkt_xmt.py Output:", stdout);
+
+    // Run strip_preamble.py to process output.tmp into output.txt
+    const stripPreambleScript = `"C:\\Users\\Tiffa\\radioconda\\python.exe" "${path.join(__dirname, "..", "CACI-GUI", "testin", "gr-control", "Receivers", "strip_preamble.py")}" "${tmpOutput}" "${finalOutput}"`;
+
+    exec(stripPreambleScript, (stripError, stripStdout, stripStderr) => {
+      if (stripError) {
+        console.error("Error executing strip_preamble.py:", stripError);
+        return res.status(500).json({ error: "Failed to execute strip_preamble.py", details: stripError.message });
+      }
+
+      console.log("strip_preamble.py Output:", stripStdout);
+
+      // Read the final output file and send the content to frontend
+      fs.readFile(finalOutput, "utf8", (readErr, fileContent) => {
+        if (readErr) {
+          console.error("Error reading output.txt:", readErr);
+          return res.status(500).json({ error: "Failed to read output.txt" });
+        }
+
+        res.json({ message: "Script executed successfully", output: fileContent });
+      });
+    });
   });
 });
 

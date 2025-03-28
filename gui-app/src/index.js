@@ -5,7 +5,6 @@ import reportWebVitals from './reportWebVitals';
 import Draggable from "react-draggable";
 import { supabase } from "./supabase"; // Import Supabase client
 import GoogleLoginButton from "./GoogleLoginButton";
-import axios from 'axios';
 
 const ALLOWED_EMAILS = [
   "nehabijoy@vt.edu",
@@ -13,14 +12,12 @@ const ALLOWED_EMAILS = [
   "tiffanyawidjaja@gmail.com",
 ];
 
-const DraggableBlocks = () => {
+const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
   const [blocks, setBlocks] = useState([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [relayCount, setRelayCount] = useState(0);
-  const [savedConfigs, setSavedConfigs] = useState({});
   const [configName, setConfigName] = useState("");
-  const [filePath, setFilePath] = useState(""); // state to store manual file path
-  const [isManual, setIsManual] = useState(false); // state to toggle between upload and manual input
+  
 
   const addBlock = (type) => {
     let blockName = type;
@@ -71,9 +68,97 @@ const DraggableBlocks = () => {
     }
   };
 
-  const handleClick = (block) => {
-    setSelectedBlock(block);
-  };
+  const fetchLatestRelayPower = async (relayNumber, blockId) => {
+      try {
+        const { data, error } = await supabase
+          .from("relay_power")
+          .select("power_in, power_out")
+          .eq("relay_number", relayNumber)
+          .order("time_stamp", { ascending: false })
+          .limit(1);
+    
+        if (error) throw error;
+    
+        if (data && data.length > 0) {
+          const { power_in, power_out } = data[0];
+    
+          setBlocks((prevBlocks) =>
+            prevBlocks.map((block) =>
+              block.id === blockId
+                ? {
+                    ...block,
+                    settings: {
+                      ...block.settings,
+                      powerIn: power_in,
+                      powerOut: power_out,
+                    },
+                  }
+                : block
+            )
+          );
+        }
+      } catch (err) {
+        console.error("Error fetching relay power:", err.message);
+      }
+    };
+    
+  
+    const fetchLatestRxPower = async (blockId) => {
+      try {
+        const { data, error } = await supabase
+          .from('rx_power') // can be renamed to 'rx_power' if you're using a separate table
+          .select('power_level')
+          .order('time_stamp', { ascending: false })
+          .limit(1);
+    
+        if (error) throw error;
+    
+        if (data && data.length > 0) {
+          const latestPower = data[0].power_level;
+    
+          setBlocks((prevBlocks) =>
+            prevBlocks.map((block) =>
+              block.id === blockId
+                ? {
+                    ...block,
+                    settings: {
+                      ...block.settings,
+                      powerLevel: latestPower,
+                    },
+                  }
+                : block
+            )
+          );
+        }
+      } catch (err) {
+        console.error("Error fetching RX power:", err.message);
+      }
+    };
+
+    const handleRemoveBlock = (blockId) => {
+      const confirmDelete = window.confirm("Are you sure you want to remove this block?");
+      if (!confirmDelete) return;
+    
+      setBlocks((prevBlocks) => prevBlocks.filter((block) => block.id !== blockId));
+      
+      // Deselect block if it's the one being removed
+      if (selectedBlock?.id === blockId) {
+        setSelectedBlock(null);
+      }
+    };
+
+    const handleClick = (block) => {
+      setSelectedBlock(block);
+    
+      if (block.type === "RX Antenna") {
+        fetchLatestRxPower(block.id);
+      }
+    
+      if (block.type.includes("Relay")) {
+        const relayNumber = parseInt(block.type.split(" ")[1]); // Extract number from "Relay 1"
+        fetchLatestRelayPower(relayNumber, block.id);
+      }
+    };
 
   const toggleArrow = (direction) => {
     if (selectedBlock) {
@@ -180,6 +265,35 @@ const DraggableBlocks = () => {
     }
   };
 
+  const deleteConfiguration = async (name) => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+    
+        if (!session?.user) throw new Error("User not authenticated");
+    
+        const userId = session.user.id;
+    
+        const { error } = await supabase
+          .from("configurations")
+          .delete()
+          .match({ user_id: userId, config_name: name });
+    
+        if (error) throw error;
+    
+        // Remove from local state
+        const updatedConfigs = { ...savedConfigs };
+        delete updatedConfigs[name];
+        setSavedConfigs(updatedConfigs);
+    
+        alert(`Deleted configuration: ${name}`);
+      } catch (err) {
+        console.error("Failed to delete configuration:", err.message);
+        alert("Failed to delete configuration.");
+      }
+    };
+
   const updateBlockFromBackend = async (blockId) => {
     try {
       const response = await fetch(`https://your-backend-api.com/block/${blockId}`);
@@ -223,7 +337,17 @@ const DraggableBlocks = () => {
             <Draggable key={block.id} nodeRef={block.nodeRef} bounds="parent"
               position={{ x: block.x, y: block.y }} onStop={(e, data) => handleDrag(e, data, block)} >
               <div ref={block.nodeRef} className="block" onClick={() => handleClick(block)}>
-                <div className="block-image">{block.type}</div>
+                <div className="block-image">
+                  {block.type}
+                  {block.type !== "Object" && (
+                  <div className="arrows">
+                    {block.arrows.top && <div className="arrow arrow-up">↑</div>}
+                    {block.arrows.right && <div className="arrow arrow-right">→</div>}
+                    {block.arrows.bottom && <div className="arrow arrow-down">↓</div>}
+                    {block.arrows.left && <div className="arrow arrow-left">←</div>}
+                  </div>
+                )}
+                </div>
               </div>
             </Draggable>
           ))}
@@ -304,6 +428,21 @@ const DraggableBlocks = () => {
                 />
               </>
             )}
+
+          {selectedBlock && (
+            <button className="button remove-button" onClick={() => handleRemoveBlock(selectedBlock.id)}>
+              Remove Block
+            </button>
+          )}
+
+          {selectedBlock.type !== "Object" && (
+              <div className="checkbox-group">
+                <label><input type="checkbox" checked={selectedBlock.arrows.top} onChange={() => toggleArrow("top")} /> Top Arrow</label>
+                <label><input type="checkbox" checked={selectedBlock.arrows.right} onChange={() => toggleArrow("right")} /> Right Arrow</label>
+                <label><input type="checkbox" checked={selectedBlock.arrows.bottom} onChange={() => toggleArrow("bottom")} /> Bottom Arrow</label>
+                <label><input type="checkbox" checked={selectedBlock.arrows.left} onChange={() => toggleArrow("left")} /> Left Arrow</label>
+              </div>
+            )}
           </div>
         ) : (
           <div className="info-box">
@@ -312,13 +451,28 @@ const DraggableBlocks = () => {
           </div>
         )}
 
-        <div className="info-box">
+<div className="info-box">
           <input type="text" value={configName} onChange={(e) => setConfigName(e.target.value)}
             placeholder="Enter configuration name" />
           <button className="button" onClick={saveConfiguration}>Save Configuration</button>
           <h4>Saved Configurations:</h4>
           {Object.keys(savedConfigs).map((name) => (
-            <button key={name} onClick={() => loadConfiguration(name)}>{name}</button>
+          <div key={name} style={{ marginBottom: "5px" }}>
+            <button onClick={() => loadConfiguration(name)}>{name}</button>
+            <button
+              style={{
+                marginLeft: "5px",
+                color: "white",
+                backgroundColor: "red",
+                border: "none",
+                padding: "4px 8px",
+                cursor: "pointer",
+              }}
+              onClick={() => deleteConfiguration(name)}
+            >
+              ✕
+            </button>
+          </div>
           ))}
         </div>
       </div>
@@ -329,39 +483,60 @@ const DraggableBlocks = () => {
 const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [savedConfigs, setSavedConfigs] = useState({});
 
   useEffect(() => {
-    const fetchUser = async () => {
-        const { data, error } = await supabase.auth.getSession();
+    const fetchSessionAndConfigs = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
-        if (error) {
-            console.error("Error fetching session:", error);
-            return;
-        }
-
-        if (data.session) {
-            const userEmail = data.session.user.email;
-            if (ALLOWED_EMAILS.includes(userEmail)) {
-                setUser(data.session.user);
-            }
-        }
+      if (error) {
+        console.error("Error fetching session:", error.message);
         setLoading(false);
+        return;
+      }
+
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
+
+      setUser(session.user);
+
+      const userId = session.user.id;
+
+      const { data, error: configError } = await supabase
+        .from("configurations")
+        .select("config_name, blocks")
+        .eq("user_id", userId);
+
+      if (configError) {
+        console.error("Error fetching configs:", configError.message);
+        setLoading(false);
+        return;
+      }
+
+      const configs = {};
+      data.forEach((row) => {
+        configs[row.config_name] = row.blocks;
+      });
+
+      setSavedConfigs(configs);
+      setLoading(false);
     };
 
-    fetchUser();
+    fetchSessionAndConfigs();
   }, []);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <div className="App">
-      {!user ? (
-        <GoogleLoginButton setUser={setUser} />
-      ) : (
-        <DraggableBlocks />
-      )}
+  return loading ? <h2>Loading...</h2> : (
+    <div>
+      <div style={{ backgroundColor: "red", padding: "10px", textAlign: "center" }}>
+        <h2>Communication Relay System​ GUI</h2>
+        {user ? <p>✅ Logged in as {user.email}</p> : <GoogleLoginButton />}
+      </div>
+      {user ? <DraggableBlocks savedConfigs={savedConfigs} setSavedConfigs={setSavedConfigs} /> : null}
     </div>
   );
 };
