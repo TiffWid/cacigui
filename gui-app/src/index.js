@@ -12,6 +12,7 @@ const ALLOWED_EMAILS = [
   "nehabijoy@vt.edu",
   "nehabijoy100@gmail.com",
   "tiffanyawidjaja@gmail.com",
+  "ivinbiju@gmail.com",
 ];
 
 const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
