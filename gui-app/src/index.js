@@ -5,6 +5,8 @@ import reportWebVitals from './reportWebVitals';
 import Draggable from "react-draggable";
 import { supabase } from "./supabase"; // Import Supabase client
 import GoogleLoginButton from "./GoogleLoginButton";
+import { Analytics } from '@vercel/analytics/react';
+
 
 const ALLOWED_EMAILS = [
   "nehabijoy@vt.edu",
@@ -252,10 +254,39 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
     setBlocks(newBlocks);
   };
 
-  const saveConfiguration = () => {
-    if (configName.trim()) {
-      setSavedConfigs({ ...savedConfigs, [configName]: blocks });
-      setConfigName("");
+  const saveConfiguration = async () => {
+    if (!configName.trim()) return;
+  
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+  
+      if (!session?.user) throw new Error("User not authenticated");
+  
+      const userId = session.user.id;
+  
+      const sanitizedBlocks = blocks.map(({ nodeRef, ...rest }) => rest); // strip non-serializables
+  
+      const { data, error } = await supabase
+        .from("configurations")
+        .upsert(
+          [
+            {
+              user_id: userId,
+              config_name: configName,
+              blocks: sanitizedBlocks,
+            },
+          ],
+          { onConflict: ["user_id", "config_name"] }
+        );
+  
+      if (error) throw error;
+  
+      alert("Configuration saved!");
+    } catch (err) {
+      console.error("Failed to save:", err.message);
+      alert("Failed to save configuration.");
     }
   };
 
@@ -537,6 +568,7 @@ const App = () => {
         {user ? <p>✅ Logged in as {user.email}</p> : <GoogleLoginButton />}
       </div>
       {user ? <DraggableBlocks savedConfigs={savedConfigs} setSavedConfigs={setSavedConfigs} /> : null}
+      <Analytics />
     </div>
   );
 };
@@ -544,6 +576,3 @@ const App = () => {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 reportWebVitals();
-
-
-
