@@ -6,8 +6,10 @@ import subprocess
 app = Flask(__name__)
 CORS(app)
 
-UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
-PYTHON_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "SDR-GUI", "pkt_xmt_psk.py")
+# Define paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
+PYTHON_SCRIPT_PATH = os.path.join(BASE_DIR, "..", "cacigui", "SDR-GUI", "pkt_xmt_psk.py")
 REPEAT_COUNT = 100
 
 # Ensure the uploads directory exists
@@ -44,22 +46,22 @@ def run_script():
     if not os.path.exists(file_path):
         return jsonify({"error": "File not found."}), 404
 
-    python_command = ["/Users/ivinbiju/radioconda/bin/python3", PYTHON_SCRIPT_PATH, f"--InFile={file_path}"]
+    python_command = f'/Users/ivinbiju/radioconda/bin/python3 "{PYTHON_SCRIPT_PATH}" --InFile="{file_path}"'
 
     try:
-        result = subprocess.run(python_command, capture_output=True, text=True, check=True)
+        result = subprocess.run(python_command, capture_output=True, text=True, shell=True, check=True)
         print("Script output:", result.stdout)
         return jsonify({
             "message": "Script executed successfully",
-            "output": result.stdout,
-            "stderr": result.stderr
+            "output": result.stdout
         })
     except subprocess.CalledProcessError as e:
-        print("Script error:", e.stderr)
+        print("Script execution failed:", e.stderr)
         return jsonify({
-            "error": "Failed to execute script",
-            "stderr": e.stderr
+            "error": "Failed to execute pkt_xmt_psk.py",
+            "details": e.stderr
         }), 500
 
 if __name__ == "__main__":
     app.run(port=3005)
+
