@@ -2,6 +2,19 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import subprocess
+import getpass
+import uhd
+
+print("Running as user:", getpass.getuser())
+print("PATH:", os.environ.get("PATH"))
+print("LD_LIBRARY_PATH:", os.environ.get("LD_LIBRARY_PATH"))
+
+# Try to detect the USRP
+try:
+    usrp = uhd.usrp.MultiUSRP()
+    print("USRP Detected:", usrp.get_pp_string())
+except Exception as e:
+    print("Error detecting USRP:", e)
 
 app = Flask(__name__)
 CORS(app)
