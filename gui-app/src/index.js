@@ -223,10 +223,10 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
       console.log("Message is required");
       return;
     }
-
+  
     const fileName = `message-${Date.now()}.txt`;
     const fileContent = selectedBlock.settings.message;
-
+  
     try {
       // Save message to a file on the transmitting server (Server 1)
       const response = await fetch("http://localhost:3005/save-message", {
@@ -234,16 +234,20 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileName, fileContent }),
       });
-
+  
       const data = await response.json();
       if (response.ok) {
         console.log("Message saved successfully:", data);
-
+  
         // Run the transmitting Python script (Server 1) with the saved file
         const scriptResponse = await fetch(`http://localhost:3005/run-script?fileName=${encodeURIComponent(fileName)}`);
         const scriptData = await scriptResponse.json();
-
-        console.log("Python Script Output:", scriptData);
+  
+        if (scriptResponse.ok) {
+          console.log("Python Script Output:", scriptData.output || scriptData.stderr);
+        } else {
+          console.error("Error running the Python script:", scriptData);
+        }
       } else {
         console.error("Failed to save message:", data);
       }
@@ -251,6 +255,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
       console.error("Error:", err);
     }
   };
+  
 
   const handleDrag = (e, data, block) => {
     const newBlocks = blocks.map((b) =>
