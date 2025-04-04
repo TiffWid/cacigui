@@ -5,7 +5,7 @@ import reportWebVitals from './reportWebVitals';
 import Draggable from "react-draggable";
 import { supabase } from "./supabase"; // Import Supabase client
 import GoogleLoginButton from "./GoogleLoginButton";
-//import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from '@vercel/analytics/react';
 
 
 const ALLOWED_EMAILS = [
@@ -13,6 +13,9 @@ const ALLOWED_EMAILS = [
   "nehabijoy100@gmail.com",
   "tiffanyawidjaja@gmail.com",
   "ivinbiju@gmail.com",
+  "jiyoonp@vt.edu",
+  "arherndon@vt.edu",
+  "brdavis4@vt.edu",
 ];
 
 const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
@@ -43,7 +46,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
         : type === "RX Antenna"
         ? { receivedMessage: "", powerLevel: 0, bandwidth: 15, battery: 100 }
         : type.includes("Relay")
-        ? { powerIn: 0, powerOut: 0, battery: 100 }
+        ? { powerIn: 0, powerOut: 0, battery: 100, vreg: 0 }
         : {},
     };
 
@@ -75,7 +78,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
       try {
         const { data, error } = await supabase
           .from("relay_power")
-          .select("power_in, power_out")
+          .select("power_in, power_out, vbat")
           .eq("relay_number", relayNumber)
           .order("time_stamp", { ascending: false })
           .limit(1);
@@ -83,7 +86,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
         if (error) throw error;
     
         if (data && data.length > 0) {
-          const { power_in, power_out } = data[0];
+          const { power_in, power_out, vbat } = data[0];
     
           setBlocks((prevBlocks) =>
             prevBlocks.map((block) =>
@@ -94,6 +97,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
                       ...block.settings,
                       powerIn: power_in,
                       powerOut: power_out,
+                      vreg: vbat ?? 0 
                     },
                   }
                 : block
@@ -347,12 +351,24 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
     }
   };
 
-  useEffect(() => {
-      const interval = setInterval(() => {
-        blocks.forEach((block) => updateBlockFromBackend(block.id));
-      }, 5000);
-      return () => clearInterval(interval);
-    }, [blocks]);
+useEffect(() => {
+  const refreshData = () => {
+    blocks.forEach((block) => {
+      if (block.type.includes("Relay")) {
+        const relayNumber = parseInt(block.type.split(" ")[1]);
+        fetchLatestRelayPower(relayNumber, block.id);
+      }
+
+      if (block.type === "RX Antenna") {
+        fetchLatestRxPower(block.id);
+      }
+    });
+  };
+
+  refreshData(); // immediate load
+  const interval = setInterval(refreshData, 5000);
+  return () => clearInterval(interval);
+}, [blocks]);
 
   return (
     <div className="container">
@@ -442,22 +458,44 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
 
             {selectedBlock.type.includes("Relay") && (
               <>
-                <label>Power In:</label>
+                <div style={{display: "grid",gridTemplateColumns: "90px 1fr",rowGap: "6px",columnGap: "6px",marginBottom: "12px",alignItems: "center"}}>
+
+                <label htmlFor="powerIn">Power In:</label>
                 <input
+                  id="powerIn"
                   type="number"
                   value={selectedBlock.settings.powerIn}
                   onChange={(e) =>
                     setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerIn: e.target.value } })
                   }
+                  style={{ width: "200px" }}
                 />
-                <label>Power Out:</label>
+
+                <label htmlFor="powerOut">Power Out:</label>
                 <input
+                  id="powerOut"
                   type="number"
                   value={selectedBlock.settings.powerOut}
                   onChange={(e) =>
                     setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, powerOut: e.target.value } })
                   }
+                  style={{ width: "200px" }}
                 />
+
+                <label htmlFor="vreg">Voltage Battery:</label>
+                <input
+                  id="vreg"
+                  type="number"
+                  value={selectedBlock.settings.vreg}
+                  onChange={(e) =>
+                    setSelectedBlock({ ...selectedBlock, settings: { ...selectedBlock.settings, vreg: e.target.value } })
+                  }
+                  style={{ width: "200px" }}
+                />
+              </div>
+
+
+
               </>
             )}
 
@@ -569,7 +607,7 @@ const App = () => {
         {user ? <p>✅ Logged in as {user.email}</p> : <GoogleLoginButton />}
       </div>
       {user ? <DraggableBlocks savedConfigs={savedConfigs} setSavedConfigs={setSavedConfigs} /> : null}
-      
+      <Analytics />
     </div>
   );
 };
