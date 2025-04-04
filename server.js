@@ -57,7 +57,7 @@ app.get("/run-script", (req, res) => {
   }
 
   // Command to run pkt_xmt.py
-  const pythonCommand = `"/Users/ivinbiju/radioconda/bin/python3" "${PYTHON_SCRIPT_PATH}" --InFile="${filePath}"`;
+  const pythonCommand = `zsh -l -c '"/Users/ivinbiju/radioconda/bin/python3" "${PYTHON_SCRIPT_PATH}" --InFile="${filePath}"`;
 
   exec(pythonCommand, (error, stdout, stderr) => {
     if (error) {
