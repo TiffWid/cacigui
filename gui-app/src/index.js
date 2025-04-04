@@ -5,7 +5,8 @@ import reportWebVitals from './reportWebVitals';
 import Draggable from "react-draggable";
 import { supabase } from "./supabase"; // Import Supabase client
 import GoogleLoginButton from "./GoogleLoginButton";
-//import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from '@vercel/analytics/react';
+import { getCLS, getFID, getLCP, getFCP, getTTFB } from 'web-vitals';
 
 
 const ALLOWED_EMAILS = [
@@ -223,10 +224,10 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
       console.log("Message is required");
       return;
     }
-  
+
     const fileName = `message-${Date.now()}.txt`;
     const fileContent = selectedBlock.settings.message;
-  
+
     try {
       // Save message to a file on the transmitting server (Server 1)
       const saveResponse = await fetch("http://localhost:3005/save-message", {
@@ -264,7 +265,6 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
       console.error("Error during message send process:", err);
     }
   };
-  
 
   const handleDrag = (e, data, block) => {
     const newBlocks = blocks.map((b) =>
@@ -621,10 +621,29 @@ const App = () => {
         {user ? <p>✅ Logged in as {user.email}</p> : <GoogleLoginButton />}
       </div>
       {user ? <DraggableBlocks savedConfigs={savedConfigs} setSavedConfigs={setSavedConfigs} /> : null}
-      
+      <Analytics />
     </div>
   );
 };
+
+const logMetricToSupabase = async (metric) => {
+  try {
+    await supabase.from("performance_logs").insert({
+      name: metric.name,
+      value: metric.value,
+      user_agent: navigator.userAgent,
+    });
+    console.log(`[📊] Logged ${metric.name}:`, metric.value);
+  } catch (error) {
+    console.error("Error logging performance metric:", error.message);
+  }
+};
+
+getCLS(logMetricToSupabase);
+getFID(logMetricToSupabase);
+getLCP(logMetricToSupabase);
+getFCP(logMetricToSupabase);
+getTTFB(logMetricToSupabase);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
