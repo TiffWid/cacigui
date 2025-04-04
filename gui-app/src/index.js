@@ -189,7 +189,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
 
     try {
       // Upload the file to the transmitting Node.js backend (Server 1)
-      const uploadResponse = await fetch("http://localhost:3005/upload-file", {
+      const uploadResponse = await fetch("h3005ttp://localhost:/upload-file", {
         method: "POST",
         body: formData,
       });

@@ -12,7 +12,7 @@ import json
 dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
 load_dotenv(dotenv_path)
 
-# Connect to Supabase via API (REST)
+# Connect to Supabase via API (REST)n
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
