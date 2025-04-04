@@ -12,7 +12,7 @@ app.use(express.json());
 
 // Define paths
 const UPLOADS_DIR = path.join(__dirname, "uploads");
-const PYTHON_SCRIPT_PATH = path.join(__dirname, "..", "CACI-GUI", "testin", "gr-control", "Transmitters", "pkt_xmt.py");
+const PYTHON_SCRIPT_PATH = path.join(__dirname, "..", "CACI-GUI", "SDR-GUI", "pkt_xmt.py");
 
 // Ensure the uploads directory exists
 if (!fs.existsSync(UPLOADS_DIR)) {
@@ -57,7 +57,7 @@ app.get("/run-script", (req, res) => {
   }
 
   // Command to run pkt_xmt.py
-  const pythonCommand = `"C:\\Users\\ivinbiju\\radioconda\\python.exe" "${PYTHON_SCRIPT_PATH}" --InFile="${filePath}"`;
+  const pythonCommand = `python3 "${PYTHON_SCRIPT_PATH}" --InFile="${filePath}"`;
 
   exec(pythonCommand, (error, stdout, stderr) => {
     if (error) {
