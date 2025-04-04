@@ -12,7 +12,7 @@ app.use(express.json());
 
 // Define paths
 const UPLOADS_DIR = path.join(__dirname, "uploads");
-const PYTHON_SCRIPT_PATH = path.join(__dirname, "..", "CACI-GUI", "SDR-GUI", "pkt_xmt_psk.py");
+const PYTHON_SCRIPT_PATH = path.join(__dirname, "..", "cacigui", "SDR-GUI", "pkt_xmt_psk.py");
 
 // Ensure the uploads directory exists
 if (!fs.existsSync(UPLOADS_DIR)) {
