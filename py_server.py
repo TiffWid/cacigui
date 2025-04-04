@@ -7,7 +7,7 @@ app = Flask(__name__)
 CORS(app)
 
 UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
-PYTHON_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "cacigui", "SDR-GUI", "pkt_xmt_psk.py")
+PYTHON_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "SDR-GUI", "pkt_xmt_psk.py")
 REPEAT_COUNT = 100
 
 # Ensure the uploads directory exists

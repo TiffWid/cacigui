@@ -229,30 +229,39 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
   
     try {
       // Save message to a file on the transmitting server (Server 1)
-      const response = await fetch("http://localhost:3005/save-message", {
+      const saveResponse = await fetch("http://localhost:3005/save-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileName, fileContent }),
       });
   
-      const data = await response.json();
-      if (response.ok) {
-        console.log("Message saved successfully:", data);
+      const saveData = await saveResponse.json();
   
-        // Run the transmitting Python script (Server 1) with the saved file
-        const scriptResponse = await fetch(`http://localhost:3005/run-script?fileName=${encodeURIComponent(fileName)}`);
-        const scriptData = await scriptResponse.json();
+      if (saveResponse.ok) {
+        console.log("Message saved successfully:", saveData);
   
-        if (scriptResponse.ok) {
-          console.log("Python Script Output:", scriptData.output || scriptData.stderr);
-        } else {
-          console.error("Error running the Python script:", scriptData);
+        // Log that we're now calling the run-script endpoint
+        console.log("Attempting to run script with:", fileName);
+  
+        try {
+          const scriptResponse = await fetch(`http://localhost:3005/run-script?fileName=${encodeURIComponent(fileName)}`);
+          const scriptData = await scriptResponse.json();
+  
+          if (scriptResponse.ok) {
+            console.log("Python Script Output:", scriptData);
+          } else {
+            console.error("Script failed to run:", scriptData);
+          }
+        } catch (scriptErr) {
+          console.error("Error calling /run-script:", scriptErr);
         }
+  
       } else {
-        console.error("Failed to save message:", data);
+        console.error("Failed to save message:", saveData);
       }
+  
     } catch (err) {
-      console.error("Error:", err);
+      console.error("Error during message send process:", err);
     }
   };
   
