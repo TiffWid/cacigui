@@ -5,7 +5,7 @@ import reportWebVitals from './reportWebVitals';
 import Draggable from "react-draggable";
 import { supabase } from "./supabase"; // Import Supabase client
 import GoogleLoginButton from "./GoogleLoginButton";
-import { Analytics } from '@vercel/analytics/react';
+//import { Analytics } from '@vercel/analytics/react';
 
 
 const ALLOWED_EMAILS = [
@@ -607,7 +607,7 @@ const App = () => {
         {user ? <p>✅ Logged in as {user.email}</p> : <GoogleLoginButton />}
       </div>
       {user ? <DraggableBlocks savedConfigs={savedConfigs} setSavedConfigs={setSavedConfigs} /> : null}
-      <Analytics />
+      
     </div>
   );
 };
