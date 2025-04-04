@@ -88,8 +88,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
     
         if (data && data.length > 0) {
           const { power_in, power_out, vbat } = data[0];
-    
-          setBlocks((prevBlocks) =>
+              setBlocks((prevBlocks) =>
             prevBlocks.map((block) =>
               block.id === blockId
                 ? {
