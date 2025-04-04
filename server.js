@@ -19,7 +19,7 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR);
 }
 
-const REPEAT_COUNT = 30; // Number of times to repeat the content
+const REPEAT_COUNT = 100; // Number of times to repeat the content
 
 // Endpoint to save the message as a .txt file
 app.post("/save-message", (req, res) => {
