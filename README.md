@@ -7,6 +7,7 @@ Electronics: Power In, Power Out, Voltage Battery​
 Features:​
 - Addable and Draggable Blocks​
 - Savable Configurations​
+- Delete Configurations
 - Google Authentication​
 - Modifiable Settings ​
 
