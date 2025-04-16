@@ -1,4 +1,4 @@
-Techstack: JavaScript Library, React​
+Techstack: JavaScript Library, React​, Python, Supabase, SQL
 
 Sub-team Specific Features:​
 SDR: Text Message Box with Button, Receiver Message Display​
@@ -13,12 +13,12 @@ Features:​
 Includes:
 - Google Auth​
 - Data storage ​
-- User profile​
+- User profile​s
 - Flask Server ​
   - SDR integration with receiver and transmitter ​
 - Real-time updates ​
 - Analytics & Monitoring ​
-- Optimize speed & responsiveness​
+- Optimized speed & responsiveness​
 
 ​
 ​
