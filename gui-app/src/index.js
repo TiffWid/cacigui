@@ -128,9 +128,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
                     ...block,
                     settings: {
                       ...block.settings,
-                      powerIn: power_in,
-                      powerOut: power_out,
-                      vreg: vbat ?? 0 
+                      receivedMessage: messages,
                     },
                   }
                 : block
@@ -147,7 +145,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
       try {
         const { data, error } = await supabase
           .from('rx_power') // can be renamed to 'rx_power' if you're using a separate table
-          .select('power_level')
+          .select("power_level, messages")
           .order('time_stamp', { ascending: false })
           .limit(1);
     
@@ -155,7 +153,9 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
     
         if (data && data.length > 0) {
           const latestPower = data[0].power_level;
-    
+          const { messages } = data[0]; 
+          var firstMessage = messages.split(";")[0];
+  
           setBlocks((prevBlocks) =>
             prevBlocks.map((block) =>
               block.id === blockId
@@ -164,6 +164,7 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
                     settings: {
                       ...block.settings,
                       powerLevel: latestPower,
+                      receivedMessage: firstMessage,
                     },
                   }
                 : block
@@ -376,27 +377,6 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
       }
     };
 
-  const updateBlockFromBackend = async (blockId) => {
-    try {
-      const response = await fetch(`https://your-backend-api.com/block/${blockId}`);
-      const data = await response.json();
-
-      setBlocks((prevBlocks) =>
-        prevBlocks.map((block) =>
-          block.id === blockId
-            ? { ...block, settings: { ...block.settings, ...data } }
-            : block
-        )
-      );
-
-      if (selectedBlock && selectedBlock.id === blockId) {
-        setSelectedBlock((prev) => ({ ...prev, settings: { ...prev.settings, ...data } }));
-      }
-    } catch (error) {
-      console.error("Error fetching block data:", error);
-    }
-  };
-
 useEffect(() => {
   const refreshData = () => {
     blocks.forEach((block) => {
@@ -408,6 +388,7 @@ useEffect(() => {
       if (block.type === "RX Antenna") {
         fetchLatestRxPower(block.id);
       }
+
     });
   };
 
