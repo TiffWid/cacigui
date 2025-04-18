@@ -7,8 +7,9 @@
 # GNU Radio Python Flow Graph
 # Title: pkt_rcv_psk
 # Description: packet receive
-# GNU Radio version: 3.10.8.0
+# GNU Radio version: 3.10.7.0
 
+from packaging.version import Version as StrictVersion
 from PyQt5 import Qt
 from gnuradio import qtgui
 from gnuradio import analog
@@ -56,9 +57,10 @@ class pkt_rcv_psk(gr.top_block, Qt.QWidget):
         self.settings = Qt.QSettings("GNU Radio", "pkt_rcv_psk")
 
         try:
-            geometry = self.settings.value("geometry")
-            if geometry:
-                self.restoreGeometry(geometry)
+            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+                self.restoreGeometry(self.settings.value("geometry").toByteArray())
+            else:
+                self.restoreGeometry(self.settings.value("geometry"))
         except BaseException as exc:
             print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
@@ -72,7 +74,6 @@ class pkt_rcv_psk(gr.top_block, Qt.QWidget):
         self.phase_bw = phase_bw = 0.0628
         self.excess_bw = excess_bw = 0.35
         self.bpsk = bpsk = digital.constellation_bpsk().base()
-        self.bpsk.set_npwr(1.0)
         self.MTU = MTU = 1500
 
         ##################################################
@@ -392,7 +393,6 @@ class pkt_rcv_psk(gr.top_block, Qt.QWidget):
 
     def set_sps(self, sps):
         self.sps = sps
-        self.digital_symbol_sync_xx_0.set_sps(self.sps)
 
     def get_phase_bw(self):
         return self.phase_bw
@@ -427,6 +427,9 @@ class pkt_rcv_psk(gr.top_block, Qt.QWidget):
 
 def main(top_block_cls=pkt_rcv_psk, options=None):
 
+    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+        style = gr.prefs().get_string('qtgui', 'style', 'raster')
+        Qt.QApplication.setGraphicsSystem(style)
     qapp = Qt.QApplication(sys.argv)
 
     tb = top_block_cls()
