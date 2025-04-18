@@ -108,6 +108,39 @@ const DraggableBlocks = ({ savedConfigs, setSavedConfigs }) => {
         console.error("Error fetching relay power:", err.message);
       }
     };
+
+    const fetchLatestMessagePower = async (blockId) => {
+      try {
+        const { data, error } = await supabase
+          .from("rx_power")
+          .select("messages")
+          .order("time_stamp", { ascending: false })
+          .limit(1);
+    
+        if (error) throw error;
+    
+        if (data && data.length > 0) {
+          const { messages } = data[0];
+              setBlocks((prevBlocks) =>
+            prevBlocks.map((block) =>
+              block.id === blockId
+                ? {
+                    ...block,
+                    settings: {
+                      ...block.settings,
+                      powerIn: power_in,
+                      powerOut: power_out,
+                      vreg: vbat ?? 0 
+                    },
+                  }
+                : block
+            )
+          );
+        }
+      } catch (err) {
+        console.error("Error fetching relay power:", err.message);
+      }
+    };
     
   
     const fetchLatestRxPower = async (blockId) => {
