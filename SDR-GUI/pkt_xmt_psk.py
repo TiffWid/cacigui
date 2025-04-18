@@ -70,7 +70,7 @@ class pkt_xmt_psk(gr.top_block):
         self.uhd_usrp_sink_0.set_center_freq(915e06, 0)
         self.uhd_usrp_sink_0.set_antenna('TX/RX', 0)
         self.uhd_usrp_sink_0.set_bandwidth(200000, 0)
-        self.uhd_usrp_sink_0.set_gain(60, 0)
+        self.uhd_usrp_sink_0.set_gain(85, 0)
         self.mmse_resampler_xx_0 = filter.mmse_resampler_cc(0, (1.0/((usrp_rate/samp_rate)*rs_ratio)))
         self.low_pass_filter_0 = filter.fir_filter_ccf(
             1,

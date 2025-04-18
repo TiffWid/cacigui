@@ -8,22 +8,27 @@ import requests
 import hashlib
 from dotenv import load_dotenv
 
-# Load environment variables from .env
+# Load .env variables
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-# Config & paths
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_API_KEY = os.getenv("SUPABASE_API_KEY")
-SUPABASE_TABLE = os.getenv("SUPABASE_TABLE", "messages")
+# Server config
+PORT = 3006
 
-PYTHON_EXE = "python3"  # Or full path to your Python if needed
-PKT_RCV_SCRIPT = os.path.join("..", "CACI-GUI", "testin", "gr-control", "Receivers", "pkt_rcv.py")
-STRIP_PREAMBLE_SCRIPT = os.path.join("..", "CACI-GUI", "testin", "gr-control", "Receivers", "strip_preamble.py")
-TMP_OUTPUT = "output.tmp"
-FINAL_OUTPUT = "output.txt"
+# Supabase config
+SUPABASE_URL = "https://anrdbdndxykqexfgrzjo.supabase.co"
+SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFucmRiZG5keHlrcWV4ZmdyempvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MTYyMzAsImV4cCI6MjA1Njk5MjIzMH0.VOnAog9yM0Gokc4WStxhXvwLAMIrsh7mxyZMg6ETNwk"
+SUPABASE_TABLE = "rx_power"
+
+# File & script paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PYTHON_EXE = r"python3"
+PKT_RCV_SCRIPT = os.path.join(BASE_DIR, "..", "cacigui", "SDR-GUI", "pkt_rcv_psk.py")
+STRIP_PREAMBLE_SCRIPT = os.path.join(BASE_DIR, "..", "cacigui","strip_preamble.py")
+TMP_OUTPUT = os.path.join(BASE_DIR, "..", "cacigui","output.tmp")
+FINAL_OUTPUT = os.path.join(BASE_DIR, "..", "cacigui","output.txt")
 
 # --- Supabase Upload ---
 def upload_to_supabase(message_text):
@@ -34,7 +39,7 @@ def upload_to_supabase(message_text):
         "Content-Type": "application/json",
         "Prefer": "return=representation"
     }
-    payload = {"content": message_text}
+    payload = {"messages": message_text}
     response = requests.post(url, json=payload, headers=headers)
     if response.status_code == 201:
         print("✅ Uploaded to Supabase:", response.json(), flush=True)
@@ -85,18 +90,6 @@ def monitor_tmp_file():
             run_strip_script()
         time.sleep(1)
 
-# --- Receiver Loop ---
-def run_receiver_loop():
-    print("📡 Starting pkt_rcv.py loop...", flush=True)
-    while True:
-        try:
-            subprocess.run(
-                [PYTHON_EXE, "-u", PKT_RCV_SCRIPT],
-                check=True
-            )
-        except subprocess.CalledProcessError as e:
-            print("❌ pkt_rcv.py error:", e.stderr, flush=True)
-        time.sleep(1)
 
 # --- Flask Manual Trigger ---
 @app.route("/run-receive-script", methods=["GET"])
@@ -123,7 +116,7 @@ def run_receive_script():
 
 # --- Start Threads ---
 def start_background_threads():
-    threading.Thread(target=run_receiver_loop, daemon=True).start()
+    threading.Thread(target=run_receive_script, daemon=True).start()	
     threading.Thread(target=monitor_tmp_file, daemon=True).start()
 
 # Launch everything
